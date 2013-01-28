@@ -788,36 +788,3 @@ test("Can use REST and RPC in conjunction", function () {
   server.respond();
   server.restore();
 });
-
-
-//test("can save simple data", function () {
-//    expect(2);
-//    this.errors = [];
-//    server = sinon.fakeServer.create();
-//    var Model = Backbone.Model.extend({
-//          url: this.url,
-//          rpc: new Backbone.Rpc(),
-//          methods: {
-//            create:  ['createText'] 
-//          }
-//      });
-//    var modelInstance = new Model();
-//    var successCb = function (model, result) {
-//      ok(model === modelInstance, 'Object stays the same in memory');
-//      ok(result, 'Server responded with true (save successfull)');
-//    };
-//
-//    // fetch the mocked data
-//    modelInstance.save({text: 'To be saved'}, {success: successCb, error: successCb});
-//    server.
-//
-//    // set response
-//    server.respondWith(this.method, this.url, [200, this.contentType,'{ "id": ' + modelInstance.rpc.responseID + ', "jsonrpc": "2.0", "result": true}']);
-//
-//    //fire response
-//    server.respond();
-//    server.restore();
-//});
-//
-
-
