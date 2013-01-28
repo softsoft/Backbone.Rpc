@@ -122,7 +122,7 @@
             this.responseID = id;
             // generate unique request id (timestamp)
             // check if params and the function name are ok, then...
-            if (_.isArray(params) && _.isString(fn)) {
+            if ((_.isArray(params) || _.isObject(params)) && _.isString(fn)) {
                 // send query
                 ret = $.ajax({
                     contentType : this.contentType + '; charset=' + this.charset,
@@ -164,7 +164,7 @@
             var definition          = null,
                 deeperNested        = false,
                 exec                = null,
-                valuableDefinition  = [],
+                valuableDefinition  = {},
                 changedAttributes   = {},
                 def                 = null;
 
@@ -203,26 +203,26 @@
                 if (def.length > 0) {
                     _.each(def, function (param) {
                         if (param === '') {
-                            valuableDefinition.push('');
+                            //valuableDefinition.push('');
                         } else {
                             if (model instanceof Backbone.Collection) {
                                 if (model[param] !== undef) {
                                     if (_.isFunction(model[param])) {
-                                        valuableDefinition.push(model[param]());
+                                        valuableDefinition[param] = model[param]();
                                     } else {
-                                        valuableDefinition.push(model[param]);
+                                        valuableDefinition[param] = model[param];
                                     }
                                 } else {
                                     if (options[param] !== undef) {
-                                        valuableDefinition.push(options[param]);
+                                        valuableDefinition[param] = options[param];
                                     }
                                 }
                             } else {
                                 if (model.get(param) !== undef) {
-                                    valuableDefinition.push(model.get(param));
+                                    valuableDefinition[param] = model.get(param);
                                 } else {
                                     if (options[param] !== undef) {
-                                        valuableDefinition.push(options[param]);
+                                        valuableDefinition[param] = options[param];
                                     }
                                 }
                             }
