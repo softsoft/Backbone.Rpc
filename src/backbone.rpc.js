@@ -199,32 +199,42 @@
             // execute a single call
             if (deeperNested !== true) {
                 def = _.clone(definition);
-                exec = def.shift();
-                if (def.length > 0) {
+                //exec = def.shift();
+                var iterator = 0;
+                if (_.keys(def).length > 0) {
                     _.each(def, function (param) {
+                	iterator++;
                         if (param === '') {
                             //valuableDefinition.push('');
                         } else {
                             if (model instanceof Backbone.Collection) {
-                                if (model[param] !== undef) {
-                                    if (_.isFunction(model[param])) {
-                                        valuableDefinition[param] = model[param]();
+                        	if ( iterator == 1 ) {
+                        	    exec = model[param];
+                        	} else {
+                                    if (model[param] !== undef) {
+                                        if (_.isFunction(model[param])) {
+                                            valuableDefinition[param] = model[param]();
+                                        } else {
+                                            valuableDefinition[param] = model[param];
+                                        }
                                     } else {
-                                        valuableDefinition[param] = model[param];
+                                        if (options[param] !== undef) {
+                                            valuableDefinition[param] = options[param];
+                                        }
                                     }
-                                } else {
-                                    if (options[param] !== undef) {
-                                        valuableDefinition[param] = options[param];
-                                    }
-                                }
+                        	}
                             } else {
-                                if (model.get(param) !== undef) {
-                                    valuableDefinition[param] = model.get(param);
-                                } else {
-                                    if (options[param] !== undef) {
-                                        valuableDefinition[param] = options[param];
+                        	if ( iterator == 1 ) {
+                        	    exec = param;
+                        	} else {
+                                    if (model.get(param) !== undef) {
+                                        valuableDefinition[param] = model.get(param);
+                                    } else {
+                                        if (options[param] !== undef) {
+                                            valuableDefinition[param] = options[param];
+                                        }
                                     }
-                                }
+                        	}
                             }
                         }
                     });

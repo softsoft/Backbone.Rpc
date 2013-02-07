@@ -1,29 +1,3 @@
-/*! Backbone.Rpc - v0.1.1
-------------------------------
-Build @ 2012-11-15
-Documentation and Full License Available at:
-http://asciidisco.github.com/Backbone.Rpc/index.html
-git://github.com/asciidisco/Backbone.Rpc.git
-Copyright (c) 2012 Sebastian Golasch <public@asciidisco.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-
-Software is furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-IN THE SOFTWARE.*/
-
 // Backbone.Rpc
 // Plugin for using the backbone js library with a remote json-rpc handler
 // instead of the default REST one
@@ -148,7 +122,7 @@ IN THE SOFTWARE.*/
             this.responseID = id;
             // generate unique request id (timestamp)
             // check if params and the function name are ok, then...
-            if (_.isArray(params) && _.isString(fn)) {
+            if ((_.isArray(params) || _.isObject(params)) && _.isString(fn)) {
                 // send query
                 ret = $.ajax({
                     contentType : this.contentType + '; charset=' + this.charset,
@@ -190,7 +164,7 @@ IN THE SOFTWARE.*/
             var definition          = null,
                 deeperNested        = false,
                 exec                = null,
-                valuableDefinition  = [],
+                valuableDefinition  = {},
                 changedAttributes   = {},
                 def                 = null;
 
@@ -225,32 +199,42 @@ IN THE SOFTWARE.*/
             // execute a single call
             if (deeperNested !== true) {
                 def = _.clone(definition);
-                exec = def.shift();
-                if (def.length > 0) {
+                //exec = def.shift();
+                var iterator = 0;
+                if (_.keys(def).length > 0) {
                     _.each(def, function (param) {
+                	iterator++;
                         if (param === '') {
-                            valuableDefinition.push('');
+                            //valuableDefinition.push('');
                         } else {
                             if (model instanceof Backbone.Collection) {
-                                if (model[param] !== undef) {
-                                    if (_.isFunction(model[param])) {
-                                        valuableDefinition.push(model[param]());
+                        	if ( iterator == 1 ) {
+                        	    exec = model[param];
+                        	} else {
+                                    if (model[param] !== undef) {
+                                        if (_.isFunction(model[param])) {
+                                            valuableDefinition[param] = model[param]();
+                                        } else {
+                                            valuableDefinition[param] = model[param];
+                                        }
                                     } else {
-                                        valuableDefinition.push(model[param]);
+                                        if (options[param] !== undef) {
+                                            valuableDefinition[param] = options[param];
+                                        }
                                     }
-                                } else {
-                                    if (options[param] !== undef) {
-                                        valuableDefinition.push(options[param]);
-                                    }
-                                }
+                        	}
                             } else {
-                                if (model.get(param) !== undef) {
-                                    valuableDefinition.push(model.get(param));
-                                } else {
-                                    if (options[param] !== undef) {
-                                        valuableDefinition.push(options[param]);
+                        	if ( iterator == 1 ) {
+                        	    exec = param;
+                        	} else {
+                                    if (model.get(param) !== undef) {
+                                        valuableDefinition[param] = model.get(param);
+                                    } else {
+                                        if (options[param] !== undef) {
+                                            valuableDefinition[param] = options[param];
+                                        }
                                     }
-                                }
+                        	}
                             }
                         }
                     });
