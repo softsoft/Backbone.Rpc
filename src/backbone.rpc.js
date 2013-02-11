@@ -31,10 +31,11 @@
             // check if we have a non std. content-type
             this.contentType = options !== undef && options.contentType !== undef ? options.contentType : this.contentType;
             // fix issue with the loss of this
-            _.bindAll(this);
+            _.bindAll(this, "exceptions", "onSuccess","onError","query","checkMethods", "defaultExceptionHandler", "handleExceptions");
         },
         // store the old Backbone.Model constructor for later use
         oldConst = Backbone.Model.prototype.constructor,
+        oldConstColl = Backbone.Collection.prototype.constructor,
         // store the old Backbone.sync method for later use
         oldSync = Backbone.sync,
         // storage object to keep track of changes from the loaded objects
@@ -198,19 +199,22 @@
 
             // execute a single call
             if (deeperNested !== true) {
-                def = _.clone(definition);
-                //exec = def.shift();
-                var iterator = 0;
-                if (_.keys(def).length > 0) {
-                    _.each(def, function (param) {
-                	iterator++;
-                        if (param === '') {
-                            //valuableDefinition.push('');
-                        } else {
-                            if (model instanceof Backbone.Collection) {
-                        	if ( iterator == 1 ) {
-                        	    exec = model[param];
-                        	} else {
+            	if(_.isObject(definition)){
+            		exec = definition.method;
+            		if(_.isUndefined(definition.values)){
+            			valuableDefinition = {}; 
+            		}else{
+            			valuableDefinition = definition.values;            			
+            		}
+            	}else{
+                    def = _.clone(definition);
+                    exec = def.shift();   
+                    if (def.length > 0) {
+                        _.each(def, function (param) {
+                            if (param === '') {
+                                //valuableDefinition.push('');
+                            } else {
+                                if (model instanceof Backbone.Collection) {
                                     if (model[param] !== undef) {
                                         if (_.isFunction(model[param])) {
                                             valuableDefinition[param] = model[param]();
@@ -222,11 +226,7 @@
                                             valuableDefinition[param] = options[param];
                                         }
                                     }
-                        	}
-                            } else {
-                        	if ( iterator == 1 ) {
-                        	    exec = param;
-                        	} else {
+                                } else {
                                     if (model.get(param) !== undef) {
                                         valuableDefinition[param] = model.get(param);
                                     } else {
@@ -234,13 +234,13 @@
                                             valuableDefinition[param] = options[param];
                                         }
                                     }
-                        	}
+                                }
                             }
-                        }
-                    });
-                } else {
-                    valuableDefinition = [];
-                }
+                        });
+                    } else {
+                        valuableDefinition = {};
+                    }                    
+            	}
 
                 return cb(exec, valuableDefinition, scb, ecb);
             }
@@ -325,6 +325,31 @@
             oldConst.apply(this, arguments);
         }
     });
+    
+    // overwrite backbones model constructor
+    Backbone.Collection = Backbone.Collection.extend({
+        // TODO: Document
+        constructor: function (collection) {
+            // check if the model has the rpc property and methods defined
+            if (this.rpc !== undef && _.isFunction(this.rpc.invoke) === true && this.methods !== undef) {
+                // walk through the methods
+                _.each(this.methods, _.bind(function (method, signature) {
+                    // check if we have a 'non standard' signature
+                    if ({'read': 1/*, 'create': 1, 'remove': 1, 'update': 1*/}[signature] !== 1) {
+                        // generate the method for the signature
+                        this[signature] = _.bind(function (options) {
+                            // invoke the dynamicly created method
+                            this.rpc.invoke(signature, this, options);
+                            return this;
+                        }, this);
+                    }
+                }, this));
+            }
+
+            // call the original constructor
+            oldConstColl.apply(this, arguments);
+        }
+    });    
 
     // overwrite backbones sync
     Backbone.sync = (function (Rpc) {
